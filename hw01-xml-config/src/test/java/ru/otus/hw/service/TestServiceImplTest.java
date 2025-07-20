@@ -53,7 +53,7 @@ class TestServiceImplTest {
     }
 
     @Test
-    @DisplayName("корректность обработки пустого списока вопросов")
+    @DisplayName("корректность обработки пустого списка вопросов")
     void executeTest_ShouldHandleEmptyQuestionList() {
         when(questionDao.findAll()).thenReturn(List.of());
 
