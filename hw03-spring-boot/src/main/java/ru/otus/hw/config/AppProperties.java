@@ -3,13 +3,12 @@ package ru.otus.hw.config;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Primary;
 
 import java.util.Locale;
 import java.util.Map;
 
-@Setter
-@Component
+@Primary
 @ConfigurationProperties(prefix = "test")
 public class AppProperties implements TestConfig, TestFileNameProvider, LocaleConfig {
 
@@ -23,6 +22,14 @@ public class AppProperties implements TestConfig, TestFileNameProvider, LocaleCo
 
     public void setLocale(String locale) {
         this.locale = Locale.forLanguageTag(locale);
+    }
+
+    public void setRightAnswersCountToPass(int rightAnswersCountToPass) {
+        this.rightAnswersCountToPass = rightAnswersCountToPass;
+    }
+
+    public void setFileNameByLocaleTag(Map<String, String> fileNameByLocaleTag) {
+        this.fileNameByLocaleTag = fileNameByLocaleTag;
     }
 
     @Override
