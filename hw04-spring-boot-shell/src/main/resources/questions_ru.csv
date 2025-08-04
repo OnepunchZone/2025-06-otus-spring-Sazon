@@ -1,0 +1,6 @@
+text,answer
+"Есть ли жизнь на Марсе?","Это науке пока не известно%true|Конечно. Красные (НЛО) это с Марса. А зеленые (НЛО) с Венеры%false|Точно нет%false"
+"Как нужно загружать ресурс из jar в Java?","ClassLoader#geResourceAsStream или ClassPathResource#getInputStream%true|ClassLoader#geResource#getFile + FileReader%false|Wingardium Leviosa%false"
+"Какой предпочтительный способ реакции на исключения?","@SneakyThrow%false|e.printStackTrace()%false|Проброс дальше с предварительным оборачиванием в бизнес-исключение (например, QuestionReadException)%true|Игнорирование исключения%false"
+"Как зовут Картмана из мультсериала 'Южный парк'?","Эрик%true|Стэн%false|Кенни%false|Баттерс%false"
+"Кто написал сагу 'Песнь льда и пламени'?","Достоевский%false|Мартин%true|Роулинг%false"
