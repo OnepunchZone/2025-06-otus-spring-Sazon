@@ -2,12 +2,10 @@ package ru.otus.hw.config;
 
 import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Primary;
 
 import java.util.Locale;
 import java.util.Map;
 
-@Primary
 @ConfigurationProperties(prefix = "test")
 public class AppProperties implements TestConfig, TestFileNameProvider, LocaleConfig {
 
