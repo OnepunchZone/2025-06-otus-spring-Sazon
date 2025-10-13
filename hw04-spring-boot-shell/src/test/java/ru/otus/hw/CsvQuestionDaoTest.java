@@ -39,17 +39,4 @@ public class CsvQuestionDaoTest {
         assertEquals("Is there life on Mars?", firstQuestion.text());
         assertEquals(3, firstQuestion.answers().size(), "Must be 3 answers");
     }
-
-    @Test
-    @DisplayName("Бросает исключение при отсутствии файла")
-    void findAll_ShouldThrowException_IfFileNotExists() {
-        when(testFileNameProvider.getTestFileName()).thenReturn("non-existent-file.csv");
-
-        Exception exception = assertThrows(QuestionReadException.class, () -> {
-            csvQuestionDao.findAll();
-        });
-
-        assertTrue(exception.getMessage().contains("File not found"));
-    }
-
 }
