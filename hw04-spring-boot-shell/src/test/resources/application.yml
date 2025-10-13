@@ -6,7 +6,7 @@ spring:
     allow-circular-references: true
 test:
   rightAnswersCountToPass: 3
-  locale: ru-RU
+  locale: en-US
   fileNameByLocaleTag:
     ru-RU: questions_ru.csv
     en-US: questions.csv
