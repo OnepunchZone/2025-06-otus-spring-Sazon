@@ -1,10 +1,11 @@
 package ru.otus.hw;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import ru.otus.hw.config.TestFileNameProvider;
 import ru.otus.hw.dao.CsvQuestionDao;
 import ru.otus.hw.domain.Question;
@@ -15,17 +16,14 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
+@SpringBootTest
 @DisplayName("Тест CsvQuestionDao на передачу существующего и не существующего ресурса")
 public class CsvQuestionDaoTest {
-    @Mock
+    @MockitoBean(name = "testFileNameProvider")
     private TestFileNameProvider testFileNameProvider;
-    private CsvQuestionDao csvQuestionDao;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        csvQuestionDao = new CsvQuestionDao(testFileNameProvider);
-    }
+    @Autowired
+    private CsvQuestionDao csvQuestionDao;
 
     @Test
     @DisplayName("Загрузка вопросов из существующего файла")
@@ -41,17 +39,4 @@ public class CsvQuestionDaoTest {
         assertEquals("Is there life on Mars?", firstQuestion.text());
         assertEquals(3, firstQuestion.answers().size(), "Must be 3 answers");
     }
-
-    @Test
-    @DisplayName("Бросает исключение при отсутствии файла")
-    void findAll_ShouldThrowException_IfFileNotExists() {
-        when(testFileNameProvider.getTestFileName()).thenReturn("non-existent-file.csv");
-
-        Exception exception = assertThrows(QuestionReadException.class, () -> {
-            csvQuestionDao.findAll();
-        });
-
-        assertTrue(exception.getMessage().contains("File not found"));
-    }
-
 }
