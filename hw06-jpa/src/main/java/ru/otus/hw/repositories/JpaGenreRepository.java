@@ -19,7 +19,7 @@ public class JpaGenreRepository implements GenreRepository {
     @Override
     public List<Genre> findAll() {
         TypedQuery<Genre> query = em.createQuery(
-                "select distinct g from Genre g", Genre.class
+                "select g from Genre g", Genre.class
         );
 
         return query.getResultList();

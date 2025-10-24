@@ -1,7 +1,7 @@
 package ru.otus.hw.repositories;
 
+import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
@@ -19,27 +19,31 @@ public class JpaBookRepository implements BookRepository {
 
     @Override
     public Optional<Book> findById(long id) {
-        TypedQuery<Book> query = em.createQuery(
-                "select b from Book b " +
-                        "left join fetch b.author " +
-                        "left join fetch b.genre " +
-                        "where b.id = :id", Book.class);
-        query.setParameter("id", id);
+        EntityGraph<?> entityGraph = em.getEntityGraph("book-author-genre-graph");
+        return Optional.ofNullable(
+                em.find(Book.class, id, java.util.Map.of("jakarta.persistence.fetchgraph", entityGraph))
+        );
+    }
 
-        try {
-            Book book = query.getSingleResult();
-            return Optional.of(book);
-        } catch (NoResultException e) {
-            return Optional.empty();
-        }
+    @Override
+    public Optional<Book> finByIdWithComments(long id) {
+        EntityGraph<?> entityGraph = em.getEntityGraph("book-with-comments-graph");
+        TypedQuery<Book> query = em.createQuery("select b from Book b where b.id = :id", Book.class);
+
+        query.setParameter("id", id);
+        query.setHint("jakarta.persistence.fetchgraph", entityGraph);
+
+        List<Book> result = query.getResultList();
+        return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
 
     @Override
     public List<Book> findAll() {
+        EntityGraph<?> entityGraph = em.getEntityGraph("book-author-genre-graph");
         TypedQuery<Book> query = em.createQuery(
-                "select distinct b from Book b " +
-                        "left join fetch b.author " +
-                        "left join fetch b.genre", Book.class);
+                "select b from Book b", Book.class);
+
+        query.setHint("jakarta.persistence.fetchgraph", entityGraph);
 
         return query.getResultList();
     }
@@ -56,9 +60,8 @@ public class JpaBookRepository implements BookRepository {
 
     @Override
     public void deleteById(long id) {
-        Book book = em.find(Book.class, id);
-        if (book != null) {
-            em.remove(book);
-        }
+        Book book = em.getReference(Book.class, id);
+
+        em.remove(book);
     }
 }

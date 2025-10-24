@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Import;
 import ru.otus.hw.models.Author;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.models.Genre;
+import ru.otus.hw.services.BookService;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,10 +39,9 @@ class JpaBookRepositoryTest {
 
         assertThat(currentBook).isPresent();
         Book book = currentBook.get();
-        assertThat(book.getId()).isEqualTo(1L);
-        assertThat(book.getTitle()).isEqualTo("BookTitle_1");
-        assertThat(book.getAuthor().getFullName()).isEqualTo("Author_1");
-        assertThat(book.getGenre().getName()).isEqualTo("Genre_1");
+
+        Book expectedBook = em.find(Book.class, 1L);
+        assertThat(book).usingRecursiveComparison().isEqualTo(expectedBook);
     }
 
     @DisplayName("должен загружать список всех книг")
@@ -51,11 +51,13 @@ class JpaBookRepositoryTest {
 
         assertThat(actualBooks).hasSize(3);
 
-        Book firstBook = actualBooks.get(0);
-        assertThat(firstBook.getId()).isEqualTo(1L);
-        assertThat(firstBook.getTitle()).isEqualTo("BookTitle_1");
-        assertThat(firstBook.getAuthor().getFullName()).isEqualTo("Author_1");
-        assertThat(firstBook.getGenre().getName()).isEqualTo("Genre_1");
+        Book expectedBook1 = em.find(Book.class, 1L);
+        Book expectedBook2 = em.find(Book.class, 2L);
+        Book expectedBook3 = em.find(Book.class, 3L);
+
+        assertThat(actualBooks)
+                .usingRecursiveFieldByFieldElementComparator()
+                .containsExactlyInAnyOrder(expectedBook1, expectedBook2, expectedBook3);
 
         actualBooks.forEach(book -> {
             assertThat(book.getAuthor()).isNotNull();
@@ -78,13 +80,17 @@ class JpaBookRepositoryTest {
 
         assertThat(savedBook).isNotNull();
         assertThat(savedBook.getId()).isGreaterThan(0);
-        assertThat(savedBook.getTitle()).isEqualTo("BookTitle_22");
-        assertThat(savedBook.getAuthor().getId()).isEqualTo(1L);
-        assertThat(savedBook.getGenre().getId()).isEqualTo(1L);
+
+        Book expectedBook = new Book();
+        expectedBook.setId(savedBook.getId());
+        expectedBook.setTitle("BookTitle_22");
+        expectedBook.setAuthor(author);
+        expectedBook.setGenre(genre);
+
+        assertThat(savedBook).usingRecursiveComparison().isEqualTo(expectedBook);
 
         Book foundBook = em.find(Book.class, savedBook.getId());
-        assertThat(foundBook).isNotNull();
-        assertThat(foundBook.getTitle()).isEqualTo("BookTitle_22");
+        assertThat(foundBook).usingRecursiveComparison().isEqualTo(expectedBook);
     }
 
     @DisplayName("должен сохранять измененную книгу")
@@ -100,14 +106,18 @@ class JpaBookRepositoryTest {
 
         Book updatedBook = repositoryJpa.save(existingBook);
 
-        assertThat(updatedBook.getId()).isEqualTo(1L);
-        assertThat(updatedBook.getTitle()).isEqualTo("Updated_Book_Title");
-        assertThat(updatedBook.getAuthor().getId()).isEqualTo(2L);
-        assertThat(updatedBook.getGenre().getId()).isEqualTo(2L);
+        Book expectedBook = new Book();
+        expectedBook.setId(1L);
+        expectedBook.setTitle("Updated_Book_Title");
+        expectedBook.setAuthor(newAuthor);
+        expectedBook.setGenre(newGenre);
+
+        assertThat(updatedBook).usingRecursiveComparison()
+                .ignoringFields("comments").isEqualTo(expectedBook);
 
         Book foundBook = em.find(Book.class, 1L);
-        assertThat(foundBook.getTitle()).isEqualTo("Updated_Book_Title");
-        assertThat(foundBook.getAuthor().getId()).isEqualTo(2L);
+        assertThat(foundBook).usingRecursiveComparison()
+                .ignoringFields("comments").isEqualTo(expectedBook);
     }
 
     @DisplayName("должен удалять книгу по id ")
@@ -131,5 +141,4 @@ class JpaBookRepositoryTest {
         assertThat(book).isNotNull();
         assertThat(book.getComments()).isNotNull();
     }
-
 }
