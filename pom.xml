@@ -16,5 +16,6 @@
         <module>hw03-spring-boot</module>
         <module>hw04-spring-boot-shell</module>
         <module>hw05-jdbc-simple</module>
+        <module>hw08-spring-data-mongodb</module>
     </modules>
 </project>
