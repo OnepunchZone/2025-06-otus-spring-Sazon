@@ -1,7 +1,9 @@
 package ru.otus.hw.services;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+//import ru.otus.hw.events.BookDeleteEvent;
 import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.models.Book;
 import ru.otus.hw.repositories.AuthorRepository;
@@ -23,6 +25,8 @@ public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
 
     private final CommentRepository commentRepository;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Optional<Book> findById(String id) {
@@ -64,6 +68,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public void deleteById(String id) {
+        //eventPublisher.publishEvent(new BookDeleteEvent(this, id));
         commentRepository.deleteByBookId(id);
 
         bookRepository.deleteById(id);

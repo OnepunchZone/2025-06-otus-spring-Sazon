@@ -105,7 +105,6 @@ class BookServiceIntegrationTest {
 
         assertThat(book.get())
                 .usingRecursiveComparison()
-                .ignoringFields("id")
                 .isEqualTo(new Book("707f1f77bcf86cd799439031", "BookTitle_1",
                         new Author("507f1f77bcf86cd799439011", "Author_1"),
                         new Genre("607f1f77bcf86cd799439021", "Genre_1")));
@@ -119,7 +118,7 @@ class BookServiceIntegrationTest {
         assertThat(books).hasSize(3);
 
         assertThat(books)
-                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id")
+                .usingRecursiveFieldByFieldElementComparator()
                 .containsExactlyInAnyOrder(
                         new Book("707f1f77bcf86cd799439031", "BookTitle_1",
                                 new Author("507f1f77bcf86cd799439011", "Author_1"),
