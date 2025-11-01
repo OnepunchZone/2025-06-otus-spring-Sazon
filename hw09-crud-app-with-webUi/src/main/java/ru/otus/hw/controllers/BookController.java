@@ -9,8 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import ru.otus.hw.models.Book;
+import ru.otus.hw.dtos.bookdtos.BookCreateDto;
+import ru.otus.hw.dtos.bookdtos.BookDto;
+import ru.otus.hw.dtos.bookdtos.BookUpdateDto;
 import ru.otus.hw.services.AuthorService;
 import ru.otus.hw.services.BookService;
 import ru.otus.hw.services.GenreService;
@@ -28,14 +29,14 @@ public class BookController {
 
     @GetMapping("/")
     public String listBooks(Model model) {
-        List<Book> books = bookService.findAll();
+        List<BookDto> books = bookService.findAll();
         model.addAttribute("books", books);
         return "book/list";
     }
 
     @GetMapping("/book/create")
     public String createBookForm(Model model) {
-        model.addAttribute("book", new Book());
+        model.addAttribute("book", new BookCreateDto());
         model.addAttribute("authors", authorService.findAll());
         model.addAttribute("genres", genreService.findAll());
 
@@ -43,10 +44,8 @@ public class BookController {
     }
 
     @PostMapping("book/create")
-    public String createBook(@Valid @ModelAttribute("book") Book book,
+    public String createBook(@Valid @ModelAttribute("book") BookCreateDto bookCreateDto,
                              BindingResult bindingResult,
-                             @RequestParam("authorId") long authorId,
-                             @RequestParam("genreId") long genreId,
                              Model model) {
 
         if (bindingResult.hasErrors()) {
@@ -56,15 +55,15 @@ public class BookController {
             return "book/create";
         }
 
-        bookService.insert(book.getTitle(), authorId, genreId);
+        bookService.create(bookCreateDto);
         return "redirect:/";
     }
 
     @GetMapping("/book/edit/{id}")
     public String editBookForm(@PathVariable("id") long id, Model model) {
-        Book book = bookService.findById(id).orElseThrow(() -> new RuntimeException("Book not found with id: " + id));
+        var bookDto = bookService.findById(id);
 
-        model.addAttribute("book", book);
+        model.addAttribute("book", bookDto);
         model.addAttribute("authors", authorService.findAll());
         model.addAttribute("genres", genreService.findAll());
 
@@ -73,7 +72,7 @@ public class BookController {
 
     @PostMapping("/book/edit/{id}")
     public String editBook(@PathVariable("id") long id,
-                           @Valid @ModelAttribute("book") Book book,
+                           @Valid @ModelAttribute("book") BookUpdateDto bookUpdateDto,
                            BindingResult bindingResult,
                            Model model) {
 
@@ -84,14 +83,14 @@ public class BookController {
             return "book/edit";
         }
 
-        bookService.update(id, book.getTitle(), book.getAuthor().getId(), book.getGenre().getId());
+        bookUpdateDto.setId(id);
+        bookService.update(bookUpdateDto);
         return "redirect:/";
     }
 
     @GetMapping("/book/view/{id}")
     public String viewBook(@PathVariable("id") long id, Model model) {
-        Book book = bookService.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found with id: " + id));
+        var book = bookService.findById(id);
 
         model.addAttribute("book", book);
         return "book/view";
@@ -99,10 +98,9 @@ public class BookController {
 
     @GetMapping("/book/delete/{id}")
     public String confirmDeleteBook(@PathVariable("id") long id, Model model) {
-        Book book = bookService.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found with id: " + id));
+        var bookDto = bookService.findById(id);
 
-        model.addAttribute("book", book);
+        model.addAttribute("book", bookDto);
         return "book/delete";
     }
 

@@ -10,68 +10,80 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ru.otus.hw.models.Author;
-import ru.otus.hw.models.Book;
-import ru.otus.hw.models.Comment;
-import ru.otus.hw.models.Genre;
+import ru.otus.hw.dtos.AuthorDto;
+import ru.otus.hw.dtos.GenreDto;
+import ru.otus.hw.dtos.bookdtos.BookCreateDto;
+import ru.otus.hw.dtos.bookdtos.BookDto;
+import ru.otus.hw.dtos.bookdtos.BookUpdateDto;
+import ru.otus.hw.dtos.commentdtos.CommentDto;
+import ru.otus.hw.exceptions.EntityNotFoundException;
+import ru.otus.hw.mappers.AuthorMapperImpl;
+import ru.otus.hw.mappers.BookMapperImpl;
+import ru.otus.hw.mappers.CommentMapperImpl;
+import ru.otus.hw.mappers.GenreMapperImpl;
+
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@DisplayName("Сервис книг без транзакций ")
+@DisplayName("Сервис книг без транзакций")
 @DataJpaTest
-@Import(BookServiceImpl.class)
-@Transactional(propagation = Propagation.NEVER)
+@Import({BookServiceImpl.class,
+        AuthorMapperImpl.class,
+        GenreMapperImpl.class,
+        CommentMapperImpl.class,
+        BookMapperImpl.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Transactional(propagation = Propagation.NEVER)
 public class BookServiceImplTest {
     @Autowired
-    private BookServiceImpl bookService;
+    private BookService bookService;
 
     @DisplayName("должен работать findById с явной загрузкой комментариев")
     @Test
     @Order(1)
     void shouldWorkWithEagerLoading() {
-        Author expectedAuthor = new Author(1L, "Author_1");
-        Genre expectedGenre = new Genre(1L, "Genre_1");
+        AuthorDto expectedAuthorDto = new AuthorDto(1L, "Author_1");
+        GenreDto expectedGenreDto = new GenreDto(1L, "Genre_1");
+        CommentDto expectedCommentDto = new CommentDto(1L, "Comment_1", 1L);
+        List<CommentDto> expectedComments = List.of(expectedCommentDto);
 
-        Comment expectedComment = new Comment(1L, "Comment_1", null);
-        List<Comment> expectedComments = List.of(expectedComment);
+        BookDto expectedBookDto = new BookDto(1L, "BookTitle_1", expectedAuthorDto,
+                expectedGenreDto, expectedComments);
 
-        Book expectedBook = new Book(1L, "BookTitle_1", expectedAuthor, expectedGenre, expectedComments);
+        BookDto actualBook = bookService.findById(1L);
 
-        Optional<Book> actualBook = bookService.findById(1L);
+        assertThat(actualBook).isNotNull();
+        assertThat(actualBook).usingRecursiveComparison()
+                .isEqualTo(expectedBookDto);
 
-        assertThat(actualBook).isPresent();
-
-        assertThat(actualBook.get()).usingRecursiveComparison()
-                .ignoringFields("comments.book").isEqualTo(expectedBook);
-
-        assertThat(actualBook.get().getComments())
+        assertThat(actualBook.getComments())
                 .isNotEmpty()
                 .hasSize(1)
-                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("book")
-                .containsExactly(expectedComment);
+                .usingRecursiveFieldByFieldElementComparator()
+                .containsExactly(expectedCommentDto);
     }
 
     @DisplayName("должен работать findAll без транзакции")
     @Test
     @Order(2)
     void shouldFindAllWithoutTransaction() {
-        var books = bookService.findAll();
+        List<BookDto> books = bookService.findAll();
 
         assertThat(books)
                 .isNotNull()
                 .hasSize(3)
                 .usingRecursiveFieldByFieldElementComparatorIgnoringFields("comments")
                 .containsExactlyInAnyOrder(
-                        new Book(1L, "BookTitle_1", new Author(1L, "Author_1"),
-                                new Genre(1L, "Genre_1"), null),
-                        new Book(2L, "BookTitle_2", new Author(2L, "Author_2"),
-                                new Genre(2L, "Genre_2"), null),
-                        new Book(3L, "BookTitle_3", new Author(3L, "Author_3"),
-                                new Genre(3L, "Genre_3"), null)
+                        new BookDto(1L, "BookTitle_1", new AuthorDto(1L, "Author_1"),
+                                new GenreDto(1L, "Genre_1"), null),
+                        new BookDto(2L, "BookTitle_2", new AuthorDto(2L, "Author_2"),
+                                new GenreDto(2L, "Genre_2"), null),
+                        new BookDto(3L, "BookTitle_3", new AuthorDto(3L, "Author_3"),
+                                new GenreDto(3L, "Genre_3"), null)
                 );
     }
 
@@ -82,13 +94,15 @@ public class BookServiceImplTest {
         long authorId = 1L;
         long genreId = 1L;
 
-        Book savedBook = bookService.insert(title, authorId, genreId);
+        BookCreateDto createDto = new BookCreateDto(title, authorId, genreId);
+        BookDto savedBook = bookService.create(createDto);
 
         assertThat(savedBook)
                 .isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(new Book(4L, title, new Author(authorId, "Author_1"),
-                        new Genre(genreId, "Genre_1"), null));
+                .ignoringFields("comments")
+                .isEqualTo(new BookDto(4L, title, new AuthorDto(authorId, "Author_1"),
+                        new GenreDto(genreId, "Genre_1"), null));
     }
 
     @DisplayName("должен обновлять существующую книгу")
@@ -99,17 +113,18 @@ public class BookServiceImplTest {
         long newAuthorId = 2L;
         long newGenreId = 2L;
 
-        Optional<Book> bookBeforeUpdate = bookService.findById(bookId);
-        List<Comment> originalComments = bookBeforeUpdate.get().getComments();
+        BookDto bookBeforeUpdate = bookService.findById(bookId);
+        List<CommentDto> originalComments = bookBeforeUpdate.getComments();
 
-        Book updatedBook = bookService.update(bookId, newTitle, newAuthorId, newGenreId);
+        BookUpdateDto updateDto = new BookUpdateDto(bookId, newTitle, newAuthorId, newGenreId);
+        BookDto updatedBook = bookService.update(updateDto);
 
-        Book expectedBook = new Book(
+        BookDto expectedBook = new BookDto(
                 bookId,
                 newTitle,
-                new Author(newAuthorId, "Author_2"),
-                new Genre(newGenreId, "Genre_2"),
-                originalComments // Сохраняем оригинальные комментарии
+                new AuthorDto(newAuthorId, "Author_2"),
+                new GenreDto(newGenreId, "Genre_2"),
+                originalComments
         );
 
         assertThat(updatedBook)
@@ -123,29 +138,42 @@ public class BookServiceImplTest {
     void shouldDeleteBookById() {
         long bookId = 1L;
 
+        BookDto bookBeforeDelete = bookService.findById(bookId);
+        assertThat(bookBeforeDelete).isNotNull();
+
         bookService.deleteById(bookId);
 
-        assertThat(bookService.findById(bookId)).isEmpty();
+        assertThatThrownBy(() -> bookService.findById(bookId))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessageContaining("Book with id " + bookId + " not found");
     }
 
-    @DisplayName("должен возвращать пустой Optional для несуществующей книги")
+    @DisplayName("должен возвращать null для несуществующей книги")
     @Test
     void shouldReturnEmptyOptionalForNonExistingBook() {
-        Optional<Book> result = bookService.findById(9L);
+        long bookId = 9L;
 
-        assertThat(result).isEmpty();
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
+                () -> bookService.findById(bookId)
+        );
+
+        assertThat(exception.getMessage())
+                .contains("Book with id " + bookId + " not found");
     }
 
-    @DisplayName("должен загружать книгу с комментариями через findByIdWithComments")
+    @DisplayName("должен загружать книгу с комментариями")
     @Test
     @Order(3)
     void shouldFindBookWithCommentsUsingEntityGraph() {
-        Optional<Book> bookWithComments = bookService.findById(1L);
+        BookDto bookWithComments = bookService.findById(1L);
 
-        assertThat(bookWithComments).isPresent();
-        assertThat(bookWithComments.get().getComments())
-                .hasSize(1)
-                .extracting(Comment::getText)
-                .containsExactly("Comment_1");
+        assertThat(bookWithComments).isNotNull();
+        assertThat(bookWithComments.getComments())
+                .isNotNull();
+
+        CommentDto expectedComment = new CommentDto(1L, "Comment_1", 1L);
+
+        assertThat(bookWithComments.getComments().get(0)).usingRecursiveComparison().isEqualTo(expectedComment);
     }
 }
