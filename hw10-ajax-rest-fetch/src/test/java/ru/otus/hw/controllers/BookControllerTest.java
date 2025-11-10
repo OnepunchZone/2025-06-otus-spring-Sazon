@@ -1,7 +1,6 @@
 package ru.otus.hw.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -15,6 +14,7 @@ import ru.otus.hw.dtos.GenreDto;
 import ru.otus.hw.dtos.bookdtos.BookCreateDto;
 import ru.otus.hw.dtos.bookdtos.BookDto;
 import ru.otus.hw.dtos.bookdtos.BookUpdateDto;
+import ru.otus.hw.exceptions.EntityNotFoundException;
 import ru.otus.hw.services.BookService;
 
 import java.util.List;
@@ -43,7 +43,6 @@ public class BookControllerTest {
             List.of());
 
     @Test
-    @Order(1)
     void shouldReturnListOfBooks() throws Exception {
 
         BookDto book = new BookDto(1L, "Test Book",
@@ -63,8 +62,6 @@ public class BookControllerTest {
                 .andExpect(jsonPath("$[0].author.fullName").value("Test Author"));
     }
 
-
-    @Order(2)
     @Test
     void shouldCreateBook() throws Exception {
         BookCreateDto createDto = new BookCreateDto("New Book", 1L, 1L);
@@ -73,7 +70,7 @@ public class BookControllerTest {
         mockMvc.perform(post("/api/v1/books")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDto)))
-                .andExpect(status().isOk())
+                .andExpect(status().is(201))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("Test Book"));
     }
@@ -94,7 +91,6 @@ public class BookControllerTest {
     }
 
     @Test
-    @Order(3)
     void shouldUpdateBook() throws Exception {
         BookUpdateDto updateDto = new BookUpdateDto(1L, "Updated Book", 1L, 1L);
         BookDto updatedBook = new BookDto(1L, "Updated Book",
@@ -115,5 +111,40 @@ public class BookControllerTest {
     void shouldDeleteBook() throws Exception {
         mockMvc.perform(delete("/api/v1/books/1"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldHandleEntityNotFoundException() throws Exception {
+        given(bookService.findById(99L))
+                .willThrow(new EntityNotFoundException("Book with id 99 not found"));
+
+        mockMvc.perform(get("/api/v1/books/99")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Book with id 99 not found"));
+    }
+
+    @Test
+    void shouldHandleGenericException() throws Exception {
+
+        mockMvc.perform(get("/api/v1/books/invalid"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.error").value("Internal Server Error"));
+    }
+
+    @Test
+    void shouldHandleIllegalArgumentException() throws Exception {
+        given(bookService.findById(-1L))
+                .willThrow(new IllegalArgumentException("Invalid book ID format"));
+
+        mockMvc.perform(get("/api/v1/books/-1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Invalid book ID format"));
     }
 }

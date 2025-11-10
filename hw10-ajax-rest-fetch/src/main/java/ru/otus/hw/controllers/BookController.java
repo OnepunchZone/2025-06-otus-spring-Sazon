@@ -2,6 +2,7 @@ package ru.otus.hw.controllers;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +37,7 @@ public class BookController {
     public ResponseEntity<BookDto> createBook(@Valid @RequestBody BookCreateDto bookCreate) {
         BookDto createdBook = bookService.create(bookCreate);
 
-        return ResponseEntity.ok(createdBook);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
     }
 
     @GetMapping("/{id}")
