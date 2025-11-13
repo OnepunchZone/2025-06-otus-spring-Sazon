@@ -20,5 +20,6 @@
         <module>hw07-spring-data-jpa</module>
         <module>hw08-spring-data-mongodb</module>
         <module>hw09-crud-app-with-webUi</module>
+        <module>hw12-spring-security-authentication</module>
     </modules>
 </project>
