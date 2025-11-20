@@ -27,8 +27,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/img/**").permitAll()
                         .requestMatchers("/login").permitAll()
-                        .requestMatchers("/user/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/book/edit/{id}", "/book/delete/{id}").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/user/**").hasRole("ADMIN")
+                        .requestMatchers("/book/edit/**", "/book/delete/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
