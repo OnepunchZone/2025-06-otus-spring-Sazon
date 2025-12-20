@@ -1,5 +1,6 @@
 package ru.otus.hw.exceptions;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.otus.hw.dtos.ErrorDto;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
@@ -35,6 +37,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
+        log.error("Произошла непредвиденная ошибка: {}", ex.getMessage(), ex);
 
         ErrorDto errorDto = ErrorDto.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
