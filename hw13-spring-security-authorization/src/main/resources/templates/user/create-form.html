@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create user</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<h1>Create new user</h1>
+
+<div th:if="${error}" style="color: red;">
+    <p th:text="${error}"></p>
+</div>
+
+<form th:action="@{/user}" th:object="${registrationDto}" method="post">
+    <div>
+        <label>Username:</label>
+        <input type="text" th:field="*{username}" required>
+        <span th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+    </div>
+
+    <div>
+        <label>Password:</label>
+        <input type="password" th:field="*{password}" required>
+        <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+    </div>
+
+    <input type="hidden" th:field="*{role}" value=${T(ru.otus.hw.models.UserRole).USER}>
+
+
+    <button type="submit">Create</button>
+</form>
+
+<br>
+<a th:href="@{/}">Back</a>
+</body>
+</html>
