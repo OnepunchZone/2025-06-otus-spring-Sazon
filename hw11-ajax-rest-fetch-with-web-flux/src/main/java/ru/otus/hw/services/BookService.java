@@ -6,8 +6,6 @@ import ru.otus.hw.dtos.bookdtos.BookCreateDto;
 import ru.otus.hw.dtos.bookdtos.BookDto;
 import ru.otus.hw.dtos.bookdtos.BookUpdateDto;
 
-import java.util.List;
-
 public interface BookService {
 
     Mono<BookDto> findById(String id);
