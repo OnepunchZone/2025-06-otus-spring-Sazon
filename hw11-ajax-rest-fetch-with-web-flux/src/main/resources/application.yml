@@ -1,0 +1,10 @@
+spring:
+  #shell:
+    #interactive:
+      #enabled: false
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/maindb
+      # host: localhost
+      # port: 27017
+      # database: maindb
